@@ -1,0 +1,17 @@
+package application.tracker.service.service;
+
+import application.tracker.service.dto.JobApplicationRequest;
+import application.tracker.service.dto.JobApplicationResponse;
+import application.tracker.service.dto.UpdateStatusRequest;
+import application.tracker.service.exceptions.ApplicationNotFoundException;
+import org.springframework.data.domain.Page;
+
+public interface JobApplicationService {
+
+    JobApplicationResponse createApplication(JobApplicationRequest request, Long userId);
+    Page<JobApplicationResponse> getAllApplications(Long userId, int page, int size);
+    JobApplicationResponse getApplicationById(Long id, Long userId) throws ApplicationNotFoundException;
+    JobApplicationResponse updateStatus(Long id, Long userId, UpdateStatusRequest request);
+    void deleteApplication(Long id, Long userId) throws IllegalAccessException;
+
+}
