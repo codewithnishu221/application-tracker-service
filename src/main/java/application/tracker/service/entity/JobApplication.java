@@ -15,11 +15,12 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name="job_applications", indexes = {
-        @Index(name = "idx_user_id", columnList = "userId")
+        @Index(name = "idx_user_id", columnList = "user_id")
 })
 public class JobApplication {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Long userId;
     private String companyName;

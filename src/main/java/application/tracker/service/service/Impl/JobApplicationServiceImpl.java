@@ -8,19 +8,23 @@ import application.tracker.service.enums.ApplicationStatus;
 import application.tracker.service.exceptions.ApplicationNotFoundException;
 import application.tracker.service.repository.JobApplicationRepository;
 import application.tracker.service.service.JobApplicationService;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 @Service
-@AllArgsConstructor
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class JobApplicationServiceImpl implements JobApplicationService {
 
     private final JobApplicationRepository jobApplicationRepository;
 
+    @Transactional
     @Override
     public JobApplicationResponse createApplication(JobApplicationRequest request, Long userId) {
         JobApplication jobApp = new JobApplication();
@@ -28,54 +32,72 @@ public class JobApplicationServiceImpl implements JobApplicationService {
         jobApp.setAppliedAt(LocalDateTime.now());
         jobApp.setCompanyName(request.getCompanyName());
         jobApp.setStatus(ApplicationStatus.APPLIED);
-        jobApp.setJobDescription(jobApp.getJobDescription());
+        jobApp.setJobDescription(request.getJobDescription());
         jobApp.setUserId(userId);
+        JobApplication savedApp = jobApplicationRepository.save(jobApp);
         JobApplicationResponse response = new JobApplicationResponse();
-        response.setId(jobApp.getId());
-        response.setCompanyName(jobApp.getCompanyName());
-        response.setAppliedAt(jobApp.getAppliedAt());
-        response.setJobTitle(jobApp.getJobTitle());
-        response.setUserId(jobApp.getUserId());
-        response.setStatus(jobApp.getStatus());
+        response.setId(savedApp.getId());
+        response.setCompanyName(savedApp.getCompanyName());
+        response.setAppliedAt(savedApp.getAppliedAt());
+        response.setJobTitle(savedApp.getJobTitle());
+        response.setUserId(savedApp.getUserId());
+        response.setStatus(savedApp.getStatus());
         return response;
     }
 
     @Override
     public Page<JobApplicationResponse> getAllApplications(Long userId, int page, int size) {
-        return null;
+        Pageable pageable = PageRequest.of(page,size, Sort.by("appliedAt").descending());
+        Page<JobApplication> jobAppPage = jobApplicationRepository.findByUserId(userId, pageable);
+        Page<JobApplicationResponse> responsePage = jobAppPage.map(jobApp->{
+            JobApplicationResponse response = new JobApplicationResponse();
+            response.setId(jobApp.getId());
+            response.setUserId(jobApp.getUserId());
+            response.setCompanyName(jobApp.getCompanyName());
+            response.setJobTitle(jobApp.getJobTitle());
+            response.setAppliedAt(jobApp.getAppliedAt());
+            response.setStatus(jobApp.getStatus());
+            response.setMatchScore(jobApp.getMatchScore());
+            response.setResumeId(jobApp.getResumeId());
+            return response;
+        });
+        return responsePage;
     }
 
     @Override
     public JobApplicationResponse getApplicationById(Long id, Long userId) throws ApplicationNotFoundException {
-        JobApplication jobApplication = jobApplicationRepository.findByUserIdAndId(id, userId);
+        JobApplication jobApplication = jobApplicationRepository.findByUserIdAndId(userId,id);
         JobApplicationResponse jobResponse = new JobApplicationResponse();
         jobResponse.setStatus(jobApplication.getStatus());
         jobResponse.setDescription(jobApplication.getJobDescription());
         jobResponse.setMatchScore(jobApplication.getMatchScore());
         jobResponse.setJobTitle(jobApplication.getJobTitle());
         jobResponse.setAppliedAt(jobApplication.getAppliedAt());
-        jobResponse.setCompanyName(jobResponse.getCompanyName());
-        jobResponse.setResumeId(jobResponse.getResumeId());
+        jobResponse.setCompanyName(jobApplication.getCompanyName());
+        jobResponse.setResumeId(jobApplication.getResumeId());
         jobResponse.setId(id);
         jobResponse.setUserId(userId);
     return jobResponse;
     }
 
+    @Transactional
     @Override
-    public JobApplicationResponse updateStatus(Long id, Long userId, UpdateStatusRequest request) {
-        JobApplication jobApplication = jobApplicationRepository.findByUserIdAndId(id, userId);
+    public JobApplicationResponse updateStatus(Long id, Long userId, UpdateStatusRequest request) throws ApplicationNotFoundException {
+        JobApplication jobApplication = jobApplicationRepository.findByUserIdAndId(userId,id);
         jobApplication.setStatus(request.getStatus());
+        JobApplication savedApp = jobApplicationRepository.save(jobApplication);
         JobApplicationResponse jobAppResponse = new JobApplicationResponse();
-        jobAppResponse.setStatus(jobApplication.getStatus());
+        jobAppResponse.setStatus(savedApp.getStatus());
         jobAppResponse.setId(id);
         return jobAppResponse;
     }
 
+    @Transactional
     @Override
     public void deleteApplication(Long id, Long userId) throws IllegalAccessException {
         JobApplication jobApp = jobApplicationRepository.findById(id).orElseThrow(()-> new ApplicationNotFoundException("Application not found!"));
 
-        if(jobApp.getUserId()!= userId){
+        if(!jobApp.getUserId().equals(userId)){
             throw new IllegalAccessException("You do not have permission to delete this application. ");
         }else {
             jobApplicationRepository.deleteById(id);
