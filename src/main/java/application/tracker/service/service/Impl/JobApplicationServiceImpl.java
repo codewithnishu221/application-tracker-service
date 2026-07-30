@@ -1,5 +1,6 @@
 package application.tracker.service.service.Impl;
 
+import application.tracker.service.client.MatchServiceClient;
 import application.tracker.service.dto.JobApplicationRequest;
 import application.tracker.service.dto.JobApplicationResponse;
 import application.tracker.service.dto.UpdateStatusRequest;
@@ -13,20 +14,23 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class JobApplicationServiceImpl implements JobApplicationService {
 
     private final JobApplicationRepository jobApplicationRepository;
-
+    private final MatchServiceClient matchServiceClient;
     @Transactional
     @Override
-    public JobApplicationResponse createApplication(JobApplicationRequest request, Long userId) {
+    public JobApplicationResponse createApplication(JobApplicationRequest request, Long userId, String token) {
         JobApplication jobApp = new JobApplication();
         jobApp.setJobTitle(request.getJobTitle());
         jobApp.setAppliedAt(LocalDateTime.now());
@@ -35,6 +39,19 @@ public class JobApplicationServiceImpl implements JobApplicationService {
         jobApp.setJobDescription(request.getJobDescription());
         jobApp.setUserId(userId);
         JobApplication savedApp = jobApplicationRepository.save(jobApp);
+        if(request.getResumeId()!= null) {
+            jobApp.setResumeId(request.getResumeId());
+            Double matchScore = matchServiceClient.getMatchScore(
+                    request.getJobDescription(),
+                    request.getResumeId(),
+                    token
+            );
+            if (matchScore != null){
+                savedApp.setMatchScore(matchScore);
+                jobApplicationRepository.save(savedApp);
+            }
+
+        }
         JobApplicationResponse response = new JobApplicationResponse();
         response.setId(savedApp.getId());
         response.setCompanyName(savedApp.getCompanyName());

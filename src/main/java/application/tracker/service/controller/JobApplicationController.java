@@ -27,7 +27,7 @@ public class JobApplicationController {
     public ResponseEntity<JobApplicationResponse> createNewApplication(@RequestBody JobApplicationRequest jobApplicationRequest){
             String token = request.getHeader("Authorization").substring(7);
             Long userId = jwtService.extractUserId(token);
-            return ResponseEntity.status(HttpStatus.CREATED).body(jobApplicationService.createApplication(jobApplicationRequest, userId));
+            return ResponseEntity.status(HttpStatus.CREATED).body(jobApplicationService.createApplication(jobApplicationRequest, userId, token));
 
     }
 
