@@ -21,3 +21,5 @@ app:
   jwt:
     secret: ${JWT_SECRET}
     expiration: 86400000
+  services:
+    match-service-url: http://localhost:8083
