@@ -1,6 +1,5 @@
 package application.tracker.service.repository;
 
-import application.tracker.service.dto.JobApplicationResponse;
 import application.tracker.service.entity.JobApplication;
 import application.tracker.service.exceptions.ApplicationNotFoundException;
 import org.springframework.data.domain.Page;
