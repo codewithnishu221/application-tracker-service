@@ -6,20 +6,19 @@ import application.tracker.service.dto.JobApplicationResponse;
 import application.tracker.service.dto.UpdateStatusRequest;
 import application.tracker.service.entity.JobApplication;
 import application.tracker.service.enums.ApplicationStatus;
+import application.tracker.service.events.ApplicationStatusEvent;
 import application.tracker.service.exceptions.ApplicationNotFoundException;
 import application.tracker.service.repository.JobApplicationRepository;
 import application.tracker.service.service.JobApplicationService;
+import application.tracker.service.service.KafkaProducerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +27,7 @@ public class JobApplicationServiceImpl implements JobApplicationService {
 
     private final JobApplicationRepository jobApplicationRepository;
     private final MatchServiceClient matchServiceClient;
+    private final KafkaProducerService kafkaProducerService;
     @Transactional
     @Override
     public JobApplicationResponse createApplication(JobApplicationRequest request, Long userId, String token) {
@@ -101,11 +101,28 @@ public class JobApplicationServiceImpl implements JobApplicationService {
     @Override
     public JobApplicationResponse updateStatus(Long id, Long userId, UpdateStatusRequest request) throws ApplicationNotFoundException {
         JobApplication jobApplication = jobApplicationRepository.findByUserIdAndId(userId,id);
+        if(jobApplication == null){
+            throw new ApplicationNotFoundException("Application not found");
+        }
         jobApplication.setStatus(request.getStatus());
         JobApplication savedApp = jobApplicationRepository.save(jobApplication);
+
+        ApplicationStatusEvent event = new ApplicationStatusEvent(
+            savedApp.getId(),
+            savedApp.getUserId(),
+            savedApp.getCompanyName(),
+            savedApp.getJobTitle(),
+            savedApp.getStatus(),
+            ""
+        );
+        kafkaProducerService.publishStatusChangeEvent(event);
+
         JobApplicationResponse jobAppResponse = new JobApplicationResponse();
         jobAppResponse.setStatus(savedApp.getStatus());
-        jobAppResponse.setId(id);
+        jobAppResponse.setId(savedApp.getId());
+        jobAppResponse.setCompanyName(savedApp.getCompanyName());
+        jobAppResponse.setJobTitle(savedApp.getJobTitle());
+        jobAppResponse.setUserId(savedApp.getUserId());
         return jobAppResponse;
     }
 
