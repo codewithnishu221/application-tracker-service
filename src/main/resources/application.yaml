@@ -14,6 +14,11 @@ spring:
         format-sql: true
 
 
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 server:
   port: 8082
 
@@ -23,10 +28,3 @@ app:
     expiration: 86400000
   services:
     match-service-url: http://localhost:8083
-
-spring:
-  kafka:
-    bootstrap-servers: localhost:9092
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
