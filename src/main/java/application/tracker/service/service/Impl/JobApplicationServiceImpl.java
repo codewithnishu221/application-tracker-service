@@ -3,6 +3,7 @@ package application.tracker.service.service.Impl;
 import application.tracker.service.client.MatchServiceClient;
 import application.tracker.service.dto.JobApplicationRequest;
 import application.tracker.service.dto.JobApplicationResponse;
+import application.tracker.service.dto.MatchScoreResponse;
 import application.tracker.service.dto.UpdateStatusRequest;
 import application.tracker.service.entity.JobApplication;
 import application.tracker.service.enums.ApplicationStatus;
@@ -40,14 +41,14 @@ public class JobApplicationServiceImpl implements JobApplicationService {
         jobApp.setUserId(userId);
         JobApplication savedApp = jobApplicationRepository.save(jobApp);
         if(request.getResumeId()!= null) {
-            jobApp.setResumeId(request.getResumeId());
-            Double matchScore = matchServiceClient.getMatchScore(
+            savedApp.setResumeId(request.getResumeId());
+            MatchScoreResponse response = matchServiceClient.getMatchScore(
                     request.getJobDescription(),
                     request.getResumeId(),
                     token
             );
-            if (matchScore != null){
-                savedApp.setMatchScore(matchScore);
+            if (response != null){
+                savedApp.setMatchScore(response.getScore());
                 jobApplicationRepository.save(savedApp);
             }
 
