@@ -1,6 +1,7 @@
 package application.tracker.service.entity;
 
 import application.tracker.service.enums.ApplicationStatus;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,7 +16,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name="job_applications", indexes = {
-        @Index(name = "idx_user_id", columnList = "user_id")
+        @Index(name = "idx_user_id", columnList = "userId")
 })
 public class JobApplication {
 
@@ -32,5 +33,8 @@ public class JobApplication {
     private LocalDateTime appliedAt;
     private Long resumeId;
     private Double matchScore;
+    @Nullable
+    @Column(columnDefinition = "vector(768)")
+    private float[] jdEmbedding;
 
 }

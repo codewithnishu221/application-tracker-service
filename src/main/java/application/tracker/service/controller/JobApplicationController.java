@@ -2,10 +2,13 @@ package application.tracker.service.controller;
 
 import application.tracker.service.dto.JobApplicationRequest;
 import application.tracker.service.dto.JobApplicationResponse;
+import application.tracker.service.dto.ReuseCheckRequest;
+import application.tracker.service.dto.ReuseRecommendation;
 import application.tracker.service.dto.UpdateStatusRequest;
 import application.tracker.service.service.JobApplicationService;
 import application.tracker.service.service.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -61,4 +64,14 @@ public class JobApplicationController {
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
     }
 
-}
+    @PostMapping("check-reuse")
+    public ResponseEntity<ReuseRecommendation> checkReuseResume(@RequestBody @Valid ReuseCheckRequest reuseCheckRequest){
+        String token = request.getHeader("Authorization").substring(7);
+        Long userId = jwtService.extractUserId(token);
+        ReuseRecommendation recommendation = jobApplicationService.checkReuseRecommendation(reuseCheckRequest.getJobDescription(), userId);
+        return ResponseEntity.ok(recommendation);
+    }
+
+    }
+
+
