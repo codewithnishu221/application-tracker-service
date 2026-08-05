@@ -4,14 +4,17 @@ import application.tracker.service.client.MatchServiceClient;
 import application.tracker.service.dto.JobApplicationRequest;
 import application.tracker.service.dto.JobApplicationResponse;
 import application.tracker.service.dto.MatchScoreResponse;
+import application.tracker.service.dto.ReuseRecommendation;
 import application.tracker.service.dto.UpdateStatusRequest;
 import application.tracker.service.entity.JobApplication;
 import application.tracker.service.enums.ApplicationStatus;
 import application.tracker.service.events.ApplicationStatusEvent;
 import application.tracker.service.exceptions.ApplicationNotFoundException;
 import application.tracker.service.repository.JobApplicationRepository;
+import application.tracker.service.service.EmbeddingWorkerService;
 import application.tracker.service.service.JobApplicationService;
 import application.tracker.service.service.KafkaProducerService;
+import application.tracker.service.util.EmbeddingUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,6 +23,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import org.springframework.ai.ollama.OllamaEmbeddingModel;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +36,15 @@ public class JobApplicationServiceImpl implements JobApplicationService {
     private final JobApplicationRepository jobApplicationRepository;
     private final MatchServiceClient matchServiceClient;
     private final KafkaProducerService kafkaProducerService;
+
+    private final OllamaEmbeddingModel embeddingModel;
+    private final EmbeddingWorkerService embeddingWorkerService;
+    private final EmbeddingUtils embeddingUtils;
+    
+    @Value("${app.similarity.threshold}")
+    private double scoreThreshold;
+
+
     @Transactional
     @Override
     public JobApplicationResponse createApplication(JobApplicationRequest request, Long userId, String token) {
@@ -51,6 +67,7 @@ public class JobApplicationServiceImpl implements JobApplicationService {
                 savedApp.setMatchScore(response.getScore());
                 jobApplicationRepository.save(savedApp);
             }
+            embeddingWorkerService.generateAndSaveEmbedding(savedApp.getId(), request.getJobDescription());
 
         }
         JobApplicationResponse response = new JobApplicationResponse();
@@ -140,4 +157,48 @@ public class JobApplicationServiceImpl implements JobApplicationService {
 
 
     }
+
+    @Override
+    public ReuseRecommendation checkReuseRecommendation(String newJdText, Long userId) {
+        float[] jdEmbedding = embeddingModel.embed(newJdText);
+        List<JobApplication> allJobs = jobApplicationRepository.findByUserId(userId);
+        List<JobApplication> jobWithEmbeddings = new ArrayList<>();
+        for(JobApplication job: allJobs){
+            if(job.getJdEmbedding() != null){
+                jobWithEmbeddings.add(job);
+            }
+        }
+        double highestScore = 0.0;
+        JobApplication bestMatch = null;
+        for(JobApplication job: jobWithEmbeddings){
+            double similarityScore = embeddingUtils.cosineSimilarity(jdEmbedding, job.getJdEmbedding()) * 100;
+            if(similarityScore > highestScore){
+                highestScore = similarityScore;
+                bestMatch = job;
+            }
+        }
+        ReuseRecommendation recommendation = new ReuseRecommendation();
+        if(bestMatch != null && highestScore > scoreThreshold){
+            recommendation.setShouldReuse(true);
+            recommendation.setSimilarityScore(highestScore);
+            recommendation.setRecommendedResumeId(bestMatch.getResumeId());
+            recommendation.setMatchedJobTitle(bestMatch.getJobTitle());
+            recommendation.setMatchedCompanyName(bestMatch.getCompanyName());
+            recommendation.setMessage("Your resume for " + bestMatch.getJobTitle() 
+        + " at " + bestMatch.getCompanyName() 
+        + " is " + Math.round(highestScore) + "% similar — consider reusing it");
+        } else{
+            recommendation.setShouldReuse(false);
+            recommendation.setSimilarityScore(highestScore);
+            recommendation.setMessage("No similar past applications found — a fresh resume is recommended");
+        }
+        return recommendation;
+    }
+
+    @Override
+    public void generateAndSaveEmbedding(Long applicationId, String jobDescription) {
+        embeddingWorkerService.generateAndSaveEmbedding(applicationId, jobDescription);
+    }
+
+
 }

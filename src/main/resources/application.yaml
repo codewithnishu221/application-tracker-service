@@ -13,7 +13,13 @@ spring:
       hibernate:
         format-sql: true
 
-
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        model: llama3.2       
+      embedding:
+        model: nomic-embed-text 
   kafka:
     bootstrap-servers: localhost:9092
     producer:
@@ -28,3 +34,5 @@ app:
     expiration: 86400000
   services:
     match-service-url: http://localhost:8083
+  similarity:
+    threshold: 75.0
