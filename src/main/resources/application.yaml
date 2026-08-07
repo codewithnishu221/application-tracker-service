@@ -9,10 +9,11 @@ spring:
     hibernate:
       ddl-auto: create
     show-sql: true
+    open-in-view: false
     properties:
       hibernate:
         format-sql: true
-
+    
   ai:
     ollama:
       base-url: http://localhost:11434

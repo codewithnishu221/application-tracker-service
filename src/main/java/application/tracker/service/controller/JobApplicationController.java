@@ -5,6 +5,7 @@ import application.tracker.service.dto.JobApplicationResponse;
 import application.tracker.service.dto.ReuseCheckRequest;
 import application.tracker.service.dto.ReuseRecommendation;
 import application.tracker.service.dto.UpdateStatusRequest;
+import application.tracker.service.exceptions.UnauthorizedAccessException;
 import application.tracker.service.service.JobApplicationService;
 import application.tracker.service.service.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,7 +26,7 @@ public class JobApplicationController {
     private HttpServletRequest request;
 
     @PostMapping("/create-application")
-    public ResponseEntity<JobApplicationResponse> createNewApplication(@RequestBody JobApplicationRequest jobApplicationRequest){
+    public ResponseEntity<JobApplicationResponse> createNewApplication(@RequestBody @Valid JobApplicationRequest jobApplicationRequest){
             String token = request.getHeader("Authorization").substring(7);
             Long userId = jwtService.extractUserId(token);
             return ResponseEntity.status(HttpStatus.CREATED).body(jobApplicationService.createApplication(jobApplicationRequest, userId, token));
@@ -57,14 +58,14 @@ public class JobApplicationController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteApplicationById(@PathVariable Long id) throws IllegalAccessException{
+    public ResponseEntity<?> deleteApplicationById(@PathVariable Long id) throws UnauthorizedAccessException{
        String token = request.getHeader("Authorization").substring(7);
         Long userId= jwtService.extractUserId(token);
         jobApplicationService.deleteApplication(id,userId);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
+        return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("check-reuse")
+    @PostMapping("/check-reuse")
     public ResponseEntity<ReuseRecommendation> checkReuseResume(@RequestBody @Valid ReuseCheckRequest reuseCheckRequest){
         String token = request.getHeader("Authorization").substring(7);
         Long userId = jwtService.extractUserId(token);

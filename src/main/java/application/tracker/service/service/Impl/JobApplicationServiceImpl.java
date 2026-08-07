@@ -10,6 +10,7 @@ import application.tracker.service.entity.JobApplication;
 import application.tracker.service.enums.ApplicationStatus;
 import application.tracker.service.events.ApplicationStatusEvent;
 import application.tracker.service.exceptions.ApplicationNotFoundException;
+import application.tracker.service.exceptions.UnauthorizedAccessException;
 import application.tracker.service.repository.JobApplicationRepository;
 import application.tracker.service.service.EmbeddingWorkerService;
 import application.tracker.service.service.JobApplicationService;
@@ -100,8 +101,11 @@ public class JobApplicationServiceImpl implements JobApplicationService {
     }
 
     @Override
-    public JobApplicationResponse getApplicationById(Long id, Long userId) throws ApplicationNotFoundException {
+    public JobApplicationResponse getApplicationById(Long id, Long userId) {
         JobApplication jobApplication = jobApplicationRepository.findByUserIdAndId(userId,id);
+        if(jobApplication == null){
+                    throw new ApplicationNotFoundException("Application not found for id: " + id);
+        }
         JobApplicationResponse jobResponse = new JobApplicationResponse();
         jobResponse.setStatus(jobApplication.getStatus());
         jobResponse.setDescription(jobApplication.getJobDescription());
@@ -117,10 +121,10 @@ public class JobApplicationServiceImpl implements JobApplicationService {
 
     @Transactional
     @Override
-    public JobApplicationResponse updateStatus(Long id, Long userId, UpdateStatusRequest request) throws ApplicationNotFoundException {
+    public JobApplicationResponse updateStatus(Long id, Long userId, UpdateStatusRequest request) {
         JobApplication jobApplication = jobApplicationRepository.findByUserIdAndId(userId,id);
         if(jobApplication == null){
-            throw new ApplicationNotFoundException("Application not found");
+                   throw new ApplicationNotFoundException("Application not found for id: " + id);
         }
         jobApplication.setStatus(request.getStatus());
         JobApplication savedApp = jobApplicationRepository.save(jobApplication);
@@ -146,11 +150,11 @@ public class JobApplicationServiceImpl implements JobApplicationService {
 
     @Transactional
     @Override
-    public void deleteApplication(Long id, Long userId) throws IllegalAccessException {
+    public void deleteApplication(Long id, Long userId) {
         JobApplication jobApp = jobApplicationRepository.findById(id).orElseThrow(()-> new ApplicationNotFoundException("Application not found!"));
 
         if(!jobApp.getUserId().equals(userId)){
-            throw new IllegalAccessException("You do not have permission to delete this application. ");
+            throw new UnauthorizedAccessException("You do not have permission to delete this application. ");
         }else {
             jobApplicationRepository.deleteById(id);
         }
