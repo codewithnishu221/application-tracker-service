@@ -3,8 +3,7 @@ package application.tracker.service.config;
 import application.tracker.service.events.ApplicationStatusEvent;
 import application.tracker.service.security.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
-import tools.jackson.databind.annotation.JsonSerialize;
-
+import org.springframework.kafka.support.serializer.JsonSerializer;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,8 +38,8 @@ public class AppConfig {
     @Bean
     public AuthenticationProvider authenticationProvider(){
         // Create the provider and set UserDetailsService as an argument in Dao because of spring boot 3+ version
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
-        //provider.setUserDetailsService(userDetailsService);
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder());
         return provider;
     }
@@ -58,7 +57,7 @@ public class AppConfig {
         Map<String, Object> config = new HashMap<>();
         config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerialize.class);
+        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
         return new DefaultKafkaProducerFactory<>(config);
 
     }
