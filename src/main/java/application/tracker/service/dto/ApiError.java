@@ -2,8 +2,6 @@ package application.tracker.service.dto;
 
 import java.time.LocalDateTime;
 
-import org.apache.kafka.common.protocol.types.Field.Str;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

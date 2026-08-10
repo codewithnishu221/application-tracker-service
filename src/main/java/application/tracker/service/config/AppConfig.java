@@ -44,11 +44,14 @@ public class AppConfig {
         return provider;
     }
 
-    @Bean
-    public RestClient restClient(){
-        return RestClient.builder()
-                .baseUrl(matchServiceUrl)
-                .build();
+    @Bean("userServiceClient")
+    public RestClient userRestClient(RestClient.Builder builder){
+        return builder.baseUrl("lb://USER-SERVICE").build();
+    }
+
+    @Bean("matchServiceClient")
+    public RestClient matchRestClient(RestClient.Builder builder){
+        return builder.baseUrl("lb://MATCH-SERVICE").build();
     }
 
 
@@ -66,4 +69,6 @@ public class AppConfig {
     public KafkaTemplate<String, ApplicationStatusEvent> kafkaTemplate(){
         return new KafkaTemplate<>(producerFactory());
     }
+
+
 }
