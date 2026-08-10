@@ -4,7 +4,6 @@ import application.tracker.service.dto.JobApplicationRequest;
 import application.tracker.service.dto.JobApplicationResponse;
 import application.tracker.service.dto.ReuseRecommendation;
 import application.tracker.service.dto.UpdateStatusRequest;
-import application.tracker.service.exceptions.ApplicationNotFoundException;
 import org.springframework.data.domain.Page;
 
 public interface JobApplicationService {
