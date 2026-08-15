@@ -78,6 +78,9 @@ public class JobApplicationServiceImpl implements JobApplicationService {
         response.setJobTitle(savedApp.getJobTitle());
         response.setUserId(savedApp.getUserId());
         response.setStatus(savedApp.getStatus());
+        response.setResumeId(savedApp.getResumeId());
+        response.setMatchScore(savedApp.getMatchScore());
+        response.setDescription(savedApp.getJobDescription());
         return response;
     }
 
@@ -165,15 +168,12 @@ public class JobApplicationServiceImpl implements JobApplicationService {
     @Override
     public ReuseRecommendation checkReuseRecommendation(String newJdText, Long userId) {
         float[] jdEmbedding = embeddingModel.embed(newJdText);
-        List<JobApplication> allJobs = jobApplicationRepository.findByUserId(userId);
-        List<JobApplication> jobWithEmbeddings = new ArrayList<>();
-        for(JobApplication job: allJobs){
-            if(job.getJdEmbedding() != null){
-                jobWithEmbeddings.add(job);
-            }
-        }
+
+        List<JobApplication> jobWithEmbeddings = jobApplicationRepository.findByUserIdAndJdEmbeddingIsNotNull(userId);
+
         double highestScore = 0.0;
         JobApplication bestMatch = null;
+
         for(JobApplication job: jobWithEmbeddings){
             double similarityScore = embeddingUtils.cosineSimilarity(jdEmbedding, job.getJdEmbedding()) * 100;
             if(similarityScore > highestScore){
@@ -181,6 +181,7 @@ public class JobApplicationServiceImpl implements JobApplicationService {
                 bestMatch = job;
             }
         }
+
         ReuseRecommendation recommendation = new ReuseRecommendation();
         if(bestMatch != null && highestScore > scoreThreshold){
             recommendation.setShouldReuse(true);
@@ -188,10 +189,10 @@ public class JobApplicationServiceImpl implements JobApplicationService {
             recommendation.setRecommendedResumeId(bestMatch.getResumeId());
             recommendation.setMatchedJobTitle(bestMatch.getJobTitle());
             recommendation.setMatchedCompanyName(bestMatch.getCompanyName());
-            recommendation.setMessage("Your resume for " + bestMatch.getJobTitle() 
-        + " at " + bestMatch.getCompanyName() 
-        + " is " + Math.round(highestScore) + "% similar — consider reusing it");
-        } else{
+            recommendation.setMessage("Your resume for " + bestMatch.getJobTitle()
+                    + " at " + bestMatch.getCompanyName()
+                    + " is " + Math.round(highestScore) + "% similar — consider reusing it");
+        } else {
             recommendation.setShouldReuse(false);
             recommendation.setSimilarityScore(highestScore);
             recommendation.setMessage("No similar past applications found — a fresh resume is recommended");

@@ -3,6 +3,11 @@ package application.tracker.service.config;
 import application.tracker.service.events.ApplicationStatusEvent;
 import application.tracker.service.security.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.web.client.RestClientCustomizer;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.context.annotation.Primary;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,8 +33,6 @@ import org.springframework.web.client.RestClient;
 public class AppConfig {
 
     private final CustomUserDetailsService userDetailsService;
-    @Value("${app.services.match-service-url}")
-    private String matchServiceUrl;
     @Bean
     public PasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder();
@@ -37,21 +40,34 @@ public class AppConfig {
 
     @Bean
     public AuthenticationProvider authenticationProvider(){
-        // Create the provider and set UserDetailsService as an argument in Dao because of spring boot 3+ version
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setUserDetailsService(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder());
         return provider;
     }
-
-    @Bean("userServiceClient")
-    public RestClient userRestClient(RestClient.Builder builder){
-        return builder.baseUrl("lb://USER-SERVICE").build();
+    @Bean
+    @Primary
+    public RestClient.Builder defaultRestClientBuilder(ObjectProvider<RestClientCustomizer> customizerProvider) {
+        RestClient.Builder builder = RestClient.builder();
+        customizerProvider.orderedStream().forEach(customizer -> customizer.customize(builder));
+        return builder;
+    }
+    @Bean("loadBalancedBuilder")
+    @LoadBalanced
+    public RestClient.Builder loadBalancedRestClientBuilder(ObjectProvider<RestClientCustomizer> customizerProvider) {
+        RestClient.Builder builder = RestClient.builder();
+        customizerProvider.orderedStream().forEach(customizer -> customizer.customize(builder));
+        return builder;
     }
 
-    @Bean("matchServiceClient")
-    public RestClient matchRestClient(RestClient.Builder builder){
-        return builder.baseUrl("lb://MATCH-SERVICE").build();
+    @Bean("userRestClient")
+    public RestClient userRestClient(@Qualifier("loadBalancedBuilder") RestClient.Builder builder) {
+        return builder.clone().baseUrl("http://USER-SERVICE").build();
+    }
+
+    @Bean("matchRestClient")
+    public RestClient matchRestClient(@Qualifier("loadBalancedBuilder") RestClient.Builder builder) {
+        return builder.clone().baseUrl("http://MATCH-SERVICE").build();
     }
 
 

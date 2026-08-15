@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -34,6 +36,7 @@ public class JobApplication {
     private Long resumeId;
     private Double matchScore;
     @Nullable
+    @JdbcTypeCode(SqlTypes.VECTOR)
     @Column(columnDefinition = "vector(768)")
     private float[] jdEmbedding;
 
