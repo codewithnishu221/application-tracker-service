@@ -14,5 +14,6 @@ public interface JobApplicationRepository extends JpaRepository<JobApplication, 
     JobApplication findByUserIdAndId(Long userId, Long id) throws ApplicationNotFoundException;
 
     List<JobApplication> findByUserId(Long userId);
+    List<JobApplication> findByUserIdAndJdEmbeddingIsNotNull(Long userId);
 
 }

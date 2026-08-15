@@ -1,21 +1,13 @@
 spring:
   application:
     name: APPLICATION-TRACKER-SERVICE
-
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
-  instance:
-    prefer-ip-address: true
-
   datasource:
-    url: jdbc:postgresql://localhost:5432/applicationtracker
+    url: jdbc:postgresql://localhost:5433/applicationtracker
     username: postgres
     password: postgres
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     show-sql: true
     open-in-view: false
     properties:
@@ -35,7 +27,14 @@ eureka:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 server:
-  port: 8082    
+  port: 8082
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
 app:
   jwt:
     secret: ${JWT_SECRET}
