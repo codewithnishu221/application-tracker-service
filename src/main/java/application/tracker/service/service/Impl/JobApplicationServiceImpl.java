@@ -148,6 +148,17 @@ public class JobApplicationServiceImpl implements JobApplicationService {
         jobAppResponse.setCompanyName(savedApp.getCompanyName());
         jobAppResponse.setJobTitle(savedApp.getJobTitle());
         jobAppResponse.setUserId(savedApp.getUserId());
+        jobAppResponse.setAppliedAt(savedApp.getAppliedAt());
+        jobAppResponse.setMatchScore(savedApp.getMatchScore());
+        jobAppResponse.setResumeId(savedApp.getResumeId());
+        jobAppResponse.setDescription(savedApp.getJobDescription());
+        if(ApplicationStatus.INTERVIEW_SCHEDULED.equals(savedApp.getStatus())){
+            jobAppResponse.setPrepLink("/api/interview-prep/generate");
+           jobAppResponse.setMessage("Interview scheduled! Click here to generate your interview prep plan.");
+        } else{
+            jobAppResponse.setMessage("Application status updated to " + savedApp.getStatus());
+        }
+
         return jobAppResponse;
     }
 
