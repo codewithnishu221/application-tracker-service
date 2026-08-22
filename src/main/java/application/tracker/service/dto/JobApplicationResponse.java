@@ -20,4 +20,6 @@ public class JobApplicationResponse {
     private Double matchScore;
     private Long resumeId;
     private String description;
+    private String prepLink;
+    private String message;
 }
