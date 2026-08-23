@@ -1,10 +1,6 @@
 package application.tracker.service.controller;
 
-import application.tracker.service.dto.JobApplicationRequest;
-import application.tracker.service.dto.JobApplicationResponse;
-import application.tracker.service.dto.ReuseCheckRequest;
-import application.tracker.service.dto.ReuseRecommendation;
-import application.tracker.service.dto.UpdateStatusRequest;
+import application.tracker.service.dto.*;
 import application.tracker.service.exceptions.UnauthorizedAccessException;
 import application.tracker.service.service.JobApplicationService;
 import application.tracker.service.service.JwtService;
@@ -15,6 +11,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/applications")
@@ -73,6 +71,17 @@ public class JobApplicationController {
         return ResponseEntity.ok(recommendation);
     }
 
+    @GetMapping("/internal/stale")
+    public ResponseEntity<List<StaleApplicationDto>>  getStaleApplicationforReminder(){
+//        String token = request.getHeader("Authorization").substring(7);
+        return ResponseEntity.ok().body(jobApplicationService.getStaleApplications());
+    }
+
+    @GetMapping("/internal/upcoming-interviews")
+    public ResponseEntity<List<UpcomingInterviewDto>> getUpcomingInterviewApp(){
+        //String token = request.getHeader("Authorization").substring(7);
+        return ResponseEntity.ok().body(jobApplicationService.getUpcomingInterviewsApplications());
+    }
     }
 
 

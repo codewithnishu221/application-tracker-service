@@ -20,7 +20,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.ai.ollama.OllamaEmbeddingModel;
@@ -42,8 +45,8 @@ public class JobApplicationServiceImpl implements JobApplicationService {
     
     @Value("${app.similarity.threshold}")
     private double scoreThreshold;
-
-
+    @Value(("${app.notifications.stale-days}"))
+    private int staleDays;
     @Transactional
     @Override
     public JobApplicationResponse createApplication(JobApplicationRequest request, Long userId, String token) {
@@ -128,8 +131,14 @@ public class JobApplicationServiceImpl implements JobApplicationService {
                    throw new ApplicationNotFoundException("Application not found for id: " + id);
         }
         jobApplication.setStatus(request.getStatus());
+        if(ApplicationStatus.INTERVIEW_SCHEDULED.equals(request.getStatus())){
+            jobApplication.setInterviewDate(request.getInterviewDate());
+        } else{
+            jobApplication.setInterviewDate(null);
+        }
+        jobApplication.setLastStatusUpdatedAt(LocalDateTime.now());
         JobApplication savedApp = jobApplicationRepository.save(jobApplication);
-        UserDetailsDto userDetailsDto = userServiceClient.getUserDetails(userId, token);
+        UserDetailsDto userDetailsDto = userServiceClient.getUserDetails(userId);
         ApplicationStatusEvent event = new ApplicationStatusEvent(
             savedApp.getId(),
             savedApp.getUserId(),
@@ -215,5 +224,42 @@ public class JobApplicationServiceImpl implements JobApplicationService {
         embeddingWorkerService.generateAndSaveEmbedding(applicationId, jobDescription);
     }
 
+    @Override
+    public List<StaleApplicationDto> getStaleApplications(){
+        LocalDateTime cutoffDate = LocalDateTime.now().minusDays(staleDays);
+        List<JobApplication> staleApps = jobApplicationRepository.findStaleApplication(cutoffDate);
+        return staleApps.stream().map(app -> {
+                    long daysSincedApplied = ChronoUnit.DAYS.between(app.getAppliedAt(), LocalDateTime.now());
+                    UserDetailsDto user = userServiceClient.getUserDetails(app.getUserId());
+
+                    return  new StaleApplicationDto(
+                            app.getId(),
+                            app.getUserId(),
+                            user != null ? user.getName() : "",
+                            user != null ? user.getEmail() : "",
+                            app.getCompanyName(),
+                            app.getJobTitle(),
+                            (int) daysSincedApplied
+                    );
+                }).toList();
+    }
+
+    @Override
+    public List<UpcomingInterviewDto> getUpcomingInterviewsApplications(){
+        LocalDate tomorrow = LocalDate.now().plusDays(1);
+        List<JobApplication> interviewApps = jobApplicationRepository.findUpcomingInterviews(tomorrow);
+         return  interviewApps.stream().map( interview -> {
+             UserDetailsDto user = userServiceClient.getUserDetails(interview.getUserId());
+              return new UpcomingInterviewDto(
+                      interview.getId(),
+                      interview.getUserId(),
+                      user != null ? user.getName() : "",
+                      user != null ? user.getEmail()  : "",
+                      interview.getCompanyName(),
+                      interview.getJobTitle()
+              );
+
+         }).toList();
+    }
 
 }
