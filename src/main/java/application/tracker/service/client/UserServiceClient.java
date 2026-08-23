@@ -17,11 +17,11 @@ public class UserServiceClient {
         this.restClient = restClient;
     }
 
-    public UserDetailsDto getUserDetails(Long userId, String token){
-        String forwardedtoken = token.startsWith("Bearer ") ? token : "Bearer " + token;
+    public UserDetailsDto getUserDetails(Long userId){
+//        String forwardedtoken = token.startsWith("Bearer ") ? token : "Bearer " + token;
         UserDetailsDto response = restClient.get()
                 .uri("http://USER-SERVICE/api/users/{userId}", userId)
-                .header("Authorization", forwardedtoken)
+//                .header("Authorization", forwardedtoken)
                 .retrieve()
                 .body(UserDetailsDto.class);
         return  response;

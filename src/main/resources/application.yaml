@@ -43,3 +43,5 @@ app:
     match-service-url: http://localhost:8083
   similarity:
     threshold: 75.0
+  notifications:
+    stale-days: 7

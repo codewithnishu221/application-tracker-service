@@ -1,10 +1,9 @@
 package application.tracker.service.service;
 
-import application.tracker.service.dto.JobApplicationRequest;
-import application.tracker.service.dto.JobApplicationResponse;
-import application.tracker.service.dto.ReuseRecommendation;
-import application.tracker.service.dto.UpdateStatusRequest;
+import application.tracker.service.dto.*;
 import org.springframework.data.domain.Page;
+
+import java.util.List;
 
 public interface JobApplicationService {
 
@@ -15,6 +14,8 @@ public interface JobApplicationService {
     void deleteApplication(Long id, Long userId);
     ReuseRecommendation checkReuseRecommendation(String newJdText, Long userId);
     void generateAndSaveEmbedding(Long applicationId, String jobDesciption);
+    List<StaleApplicationDto> getStaleApplications();
+    List<UpcomingInterviewDto> getUpcomingInterviewsApplications();
 
 
 }

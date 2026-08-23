@@ -23,6 +23,7 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(
                         auth -> auth
+                                .requestMatchers("/api/applications/internal/upcoming-interviews", "/api/applications/internal/stale").permitAll()
                                 .anyRequest()
                                 .authenticated())
                 .csrf(csrf-> csrf.disable())

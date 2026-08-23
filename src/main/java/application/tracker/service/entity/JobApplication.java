@@ -10,6 +10,7 @@ import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -39,5 +40,7 @@ public class JobApplication {
     @JdbcTypeCode(SqlTypes.VECTOR)
     @Column(columnDefinition = "vector(768)")
     private float[] jdEmbedding;
-
+    @Nullable
+    private LocalDate interviewDate;
+    private LocalDateTime lastStatusUpdatedAt;
 }
