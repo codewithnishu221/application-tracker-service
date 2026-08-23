@@ -15,4 +15,5 @@ public class ApplicationStatusEvent {
     private String jobTitle;
     private ApplicationStatus newStatus;
     private String userEmail;
+    private String userName;
 }

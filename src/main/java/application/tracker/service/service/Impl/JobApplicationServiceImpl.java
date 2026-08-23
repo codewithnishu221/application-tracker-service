@@ -1,11 +1,8 @@
 package application.tracker.service.service.Impl;
 
 import application.tracker.service.client.MatchServiceClient;
-import application.tracker.service.dto.JobApplicationRequest;
-import application.tracker.service.dto.JobApplicationResponse;
-import application.tracker.service.dto.MatchScoreResponse;
-import application.tracker.service.dto.ReuseRecommendation;
-import application.tracker.service.dto.UpdateStatusRequest;
+import application.tracker.service.client.UserServiceClient;
+import application.tracker.service.dto.*;
 import application.tracker.service.entity.JobApplication;
 import application.tracker.service.enums.ApplicationStatus;
 import application.tracker.service.events.ApplicationStatusEvent;
@@ -36,6 +33,7 @@ public class JobApplicationServiceImpl implements JobApplicationService {
 
     private final JobApplicationRepository jobApplicationRepository;
     private final MatchServiceClient matchServiceClient;
+    private final UserServiceClient userServiceClient;
     private final KafkaProducerService kafkaProducerService;
 
     private final OllamaEmbeddingModel embeddingModel;
@@ -124,21 +122,22 @@ public class JobApplicationServiceImpl implements JobApplicationService {
 
     @Transactional
     @Override
-    public JobApplicationResponse updateStatus(Long id, Long userId, UpdateStatusRequest request) {
+    public JobApplicationResponse updateStatus(Long id, Long userId, UpdateStatusRequest request, String token) {
         JobApplication jobApplication = jobApplicationRepository.findByUserIdAndId(userId,id);
         if(jobApplication == null){
                    throw new ApplicationNotFoundException("Application not found for id: " + id);
         }
         jobApplication.setStatus(request.getStatus());
         JobApplication savedApp = jobApplicationRepository.save(jobApplication);
-
+        UserDetailsDto userDetailsDto = userServiceClient.getUserDetails(userId, token);
         ApplicationStatusEvent event = new ApplicationStatusEvent(
             savedApp.getId(),
             savedApp.getUserId(),
             savedApp.getCompanyName(),
             savedApp.getJobTitle(),
             savedApp.getStatus(),
-            ""
+            userDetailsDto != null ? userDetailsDto.getEmail() : "",
+            userDetailsDto != null ? userDetailsDto.getName(): ""
         );
         kafkaProducerService.publishStatusChangeEvent(event);
 
