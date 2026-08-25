@@ -14,6 +14,9 @@ import application.tracker.service.service.JobApplicationService;
 import application.tracker.service.service.KafkaProducerService;
 import application.tracker.service.util.EmbeddingUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -47,6 +50,9 @@ public class JobApplicationServiceImpl implements JobApplicationService {
     private double scoreThreshold;
     @Value(("${app.notifications.stale-days}"))
     private int staleDays;
+
+
+    @CacheEvict(value = "applications", allEntries = true)
     @Transactional
     @Override
     public JobApplicationResponse createApplication(JobApplicationRequest request, Long userId, String token) {
@@ -85,6 +91,7 @@ public class JobApplicationServiceImpl implements JobApplicationService {
         return response;
     }
 
+    @Cacheable(value = "applications", key = "#userId + '-page-' + #page + '-size-' + #size")
     @Override
     public Page<JobApplicationResponse> getAllApplications(Long userId, int page, int size) {
         Pageable pageable = PageRequest.of(page,size, Sort.by("appliedAt").descending());
@@ -104,6 +111,8 @@ public class JobApplicationServiceImpl implements JobApplicationService {
         return responsePage;
     }
 
+    @Cacheable(value = "applications",
+     key = "'app-' +#id + '-user-' + #userId")
     @Override
     public JobApplicationResponse getApplicationById(Long id, Long userId) {
         JobApplication jobApplication = jobApplicationRepository.findByUserIdAndId(userId,id);
@@ -123,6 +132,11 @@ public class JobApplicationServiceImpl implements JobApplicationService {
     return jobResponse;
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "applications",
+            key = "'app-' + #id + '-user-' + #userId"),
+            @CacheEvict(value = "applications", allEntries = true)
+    })
     @Transactional
     @Override
     public JobApplicationResponse updateStatus(Long id, Long userId, UpdateStatusRequest request, String token) {
@@ -170,6 +184,9 @@ public class JobApplicationServiceImpl implements JobApplicationService {
         return jobAppResponse;
     }
 
+
+
+    @CacheEvict(value = "applications", allEntries = true)
     @Transactional
     @Override
     public void deleteApplication(Long id, Long userId) {
