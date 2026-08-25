@@ -7,9 +7,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -25,6 +27,11 @@ public interface JobApplicationRepository extends JpaRepository<JobApplication, 
     List<JobApplication> findStaleApplication(@Param("cutoffDate")LocalDateTime cutoffDate);
 
     @Query("Select j From JobApplication j Where j.status = 'INTERVIEW_SCHEDULED' " +
-    "AND j.interviewDate = : tomorrow")
+    "AND j.interviewDate = :tomorrow")
     List<JobApplication> findUpcomingInterviews(@Param("tomorrow")LocalDate tomorrow);
+
+    @Modifying
+    @Transactional
+    @Query(value = "UPDATE job_applications SET jd_embedding = cast(:embedding as vector) WHERE id = :id", nativeQuery = true)
+    void updateJdEmbedding(@Param("id") Long id, @Param("embedding") String embedding);
 }
