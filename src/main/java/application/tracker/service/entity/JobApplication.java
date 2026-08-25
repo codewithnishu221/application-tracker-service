@@ -36,9 +36,8 @@ public class JobApplication {
     private LocalDateTime appliedAt;
     private Long resumeId;
     private Double matchScore;
-    @Nullable
     @JdbcTypeCode(SqlTypes.VECTOR)
-    @Column(columnDefinition = "vector(768)")
+    @Column(name = "jd_embedding", columnDefinition = "vector(1536)") // match your Ollama model dimension (e.g., 768, 1536, or 384)
     private float[] jdEmbedding;
     @Nullable
     private LocalDate interviewDate;
