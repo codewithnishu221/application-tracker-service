@@ -5,12 +5,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class JobApplicationResponse {
+public class JobApplicationResponse implements Serializable {
     private Long id;
     private Long userId;
     private String companyName;
@@ -22,4 +23,5 @@ public class JobApplicationResponse {
     private String description;
     private String prepLink;
     private String message;
+    private static final long serialVersionUID =1L;
 }
