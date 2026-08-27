@@ -54,3 +54,44 @@ app:
     threshold: 75.0
   notifications:
     stale-days: 7
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      matchService:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        minimum-number-of-calls: 5
+
+        record-exceptions:
+          - java.lang.Exception
+        ignore-exceptions:
+          - application.tracker.service.exceptions.ApplicationNotFoundException
+
+      userService:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 15s
+        permitted-number-of-calls-in-half-open-state: 3
+        minimum-number-of-calls: 5
+
+  retry:
+    instances:
+      matchService:
+        max-attempts: 3
+        wait-duration: 500ms
+        retry-exceptions:
+          - org.springframework.web.client.ResourceAccessException
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,circuitbreakers
+    health:
+      circuitbreakers:
+        enabled: true
+    endpoint:
+      health:
+        show-details: always
