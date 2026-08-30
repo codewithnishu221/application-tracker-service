@@ -50,7 +50,7 @@ public class JobApplicationController {
     public ResponseEntity<?> updateJobStatus(@PathVariable Long id, @RequestBody UpdateStatusRequest updateStatusRequest){
        String token = request.getHeader("Authorization").substring(7);
         Long userId= jwtService.extractUserId(token);
-        JobApplicationResponse updated = jobApplicationService.updateStatus(id,userId,updateStatusRequest, token);
+        JobApplicationResponse updated = jobApplicationService.updateStatus(id,userId,updateStatusRequest);
         return ResponseEntity.ok(updated);
 
     }
