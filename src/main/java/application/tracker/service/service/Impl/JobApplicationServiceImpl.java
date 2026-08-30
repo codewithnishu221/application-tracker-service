@@ -139,7 +139,7 @@ public class JobApplicationServiceImpl implements JobApplicationService {
     })
     @Transactional
     @Override
-    public JobApplicationResponse updateStatus(Long id, Long userId, UpdateStatusRequest request, String token) {
+    public JobApplicationResponse updateStatus(Long id, Long userId, UpdateStatusRequest request) {
         JobApplication jobApplication = jobApplicationRepository.findByUserIdAndId(userId,id);
         if(jobApplication == null){
                    throw new ApplicationNotFoundException("Application not found for id: " + id);
