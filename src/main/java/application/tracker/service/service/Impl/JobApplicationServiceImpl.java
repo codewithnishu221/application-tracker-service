@@ -244,7 +244,7 @@ public class JobApplicationServiceImpl implements JobApplicationService {
     @Override
     public List<StaleApplicationDto> getStaleApplications(){
         LocalDateTime cutoffDate = LocalDateTime.now().minusDays(staleDays);
-        List<JobApplication> staleApps = jobApplicationRepository.findStaleApplication(cutoffDate);
+        List<JobApplication> staleApps = jobApplicationRepository.findStaleApplication(ApplicationStatus.APPLIED,cutoffDate);
         return staleApps.stream().map(app -> {
                     long daysSincedApplied = ChronoUnit.DAYS.between(app.getAppliedAt(), LocalDateTime.now());
                     UserDetailsDto user = userServiceClient.getUserDetails(app.getUserId());

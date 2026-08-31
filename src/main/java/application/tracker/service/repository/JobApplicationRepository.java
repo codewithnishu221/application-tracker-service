@@ -1,6 +1,7 @@
 package application.tracker.service.repository;
 
 import application.tracker.service.entity.JobApplication;
+import application.tracker.service.enums.ApplicationStatus;
 import application.tracker.service.exceptions.ApplicationNotFoundException;
 
 import java.time.LocalDate;
@@ -17,14 +18,17 @@ import org.springframework.data.repository.query.Param;
 
 public interface JobApplicationRepository extends JpaRepository<JobApplication, Long> {
 
+
     Page<JobApplication> findByUserId(Long userId, Pageable pageable);
     JobApplication findByUserIdAndId(Long userId, Long id) throws ApplicationNotFoundException;
-
-    List<JobApplication> findByUserId(Long userId);
+    @Query("Select j from JobApplication j" +
+            "Where j.userId = :userId Order by j.appliedAt DESC")
+    List<JobApplication> findByUserId(@Param("userId") Long userId);
     List<JobApplication> findByUserIdAndJdEmbeddingIsNotNull(Long userId);
-    @Query("SELECT j from JobApplication j Where j.status = 'APPLIED'" +
+    @Query("SELECT j from JobApplication j Where j.status = :status" +
     "AND j.appliedAt <:cutoffDate")
-    List<JobApplication> findStaleApplication(@Param("cutoffDate")LocalDateTime cutoffDate);
+    List<JobApplication> findStaleApplication(@Param("status") ApplicationStatus status,
+                                              @Param("cutoffDate")LocalDateTime cutoffDate);
 
     @Query("Select j From JobApplication j Where j.status = 'INTERVIEW_SCHEDULED' " +
     "AND j.interviewDate = :tomorrow")
