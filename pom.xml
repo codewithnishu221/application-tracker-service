@@ -200,6 +200,13 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
+                        <!-- generates both HTML and XML -->
+                        <configuration>
+                            <formats>
+                                <format>HTML</format>
+                                <format>XML</format>
+                            </formats>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
