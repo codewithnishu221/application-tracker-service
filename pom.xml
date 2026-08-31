@@ -23,6 +23,20 @@
         <java.version>17</java.version>
         <spring-ai.version>1.0.0-M6</spring-ai.version>
         <spring-cloud.version>2023.0.1</spring-cloud.version>
+        <sonar.organization>codewithnishu221</sonar.organization>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <sonar.projectKey>codewithnishu221_application-tracker-service</sonar.projectKey>
+        <!-- tell SonarCloud where JaCoCo XML report lives -->
+        <sonar.coverage.jacoco.xmlReportPaths>
+            target/site/jacoco/jacoco.xml
+        </sonar.coverage.jacoco.xmlReportPaths>
+        <sonar.exclusions>
+            **/dto/**,
+            **/entity/**,
+            **/exceptions/**,
+            **/config/**,
+            **/*Application.java
+        </sonar.exclusions>
     </properties>
 
     <dependencies>
@@ -102,14 +116,27 @@
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-ollama-spring-boot-starter</artifactId>
         </dependency>
+
         <dependency>
         <groupId>org.springframework.cloud</groupId>
         <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
     </dependency>
+
     <dependency>
     <groupId>org.springframework.cloud</groupId>
     <artifactId>spring-cloud-starter-loadbalancer</artifactId>
 </dependency>
+        <!-- Actuator — exposes metrics endpoint -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- Micrometer Prometheus registry — formats metrics for Prometheus -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
         <!-- Tests -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -224,6 +251,11 @@
                     </excludes>
                 </configuration>
 
+            </plugin>
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+                <version>3.11.0.3922</version>
             </plugin>
 
         </plugins>
