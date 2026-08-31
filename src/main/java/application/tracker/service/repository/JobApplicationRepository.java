@@ -21,17 +21,17 @@ public interface JobApplicationRepository extends JpaRepository<JobApplication, 
 
     Page<JobApplication> findByUserId(Long userId, Pageable pageable);
     JobApplication findByUserIdAndId(Long userId, Long id) throws ApplicationNotFoundException;
-    @Query("Select j from JobApplication j" +
+    @Query("Select j from JobApplication j " +
             "Where j.userId = :userId Order by j.appliedAt DESC")
     List<JobApplication> findByUserId(@Param("userId") Long userId);
     List<JobApplication> findByUserIdAndJdEmbeddingIsNotNull(Long userId);
     @Query("SELECT j from JobApplication j Where j.status = :status" +
-    "AND j.appliedAt <:cutoffDate")
+    " AND j.appliedAt <:cutoffDate")
     List<JobApplication> findStaleApplication(@Param("status") ApplicationStatus status,
                                               @Param("cutoffDate")LocalDateTime cutoffDate);
 
     @Query("Select j From JobApplication j Where j.status = 'INTERVIEW_SCHEDULED' " +
-    "AND j.interviewDate = :tomorrow")
+    " AND j.interviewDate = :tomorrow")
     List<JobApplication> findUpcomingInterviews(@Param("tomorrow")LocalDate tomorrow);
 
     @Modifying

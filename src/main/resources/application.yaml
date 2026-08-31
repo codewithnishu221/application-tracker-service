@@ -95,10 +95,25 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,circuitbreakers
+        include: health, info, metrics, prometheus, circuitbreakers
+  endpoint:
     health:
+      show-details: always
       circuitbreakers:
+               enabled: true
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
         enabled: true
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5, 0.95, 0.99
     endpoint:
       health:
         show-details: always

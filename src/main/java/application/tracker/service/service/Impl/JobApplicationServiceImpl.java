@@ -13,6 +13,9 @@ import application.tracker.service.service.EmbeddingWorkerService;
 import application.tracker.service.service.JobApplicationService;
 import application.tracker.service.service.KafkaProducerService;
 import application.tracker.service.util.EmbeddingUtils;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -45,12 +48,29 @@ public class JobApplicationServiceImpl implements JobApplicationService {
     private final OllamaEmbeddingModel embeddingModel;
     private final EmbeddingWorkerService embeddingWorkerService;
     private final EmbeddingUtils embeddingUtils;
+    private final MeterRegistry meterRegistry;
     
     @Value("${app.similarity.threshold}")
     private double scoreThreshold;
     @Value(("${app.notifications.stale-days}"))
     private int staleDays;
 
+    private Counter applicationCreatedCounter;
+    private Counter matchScoreSuccessCounter;
+    private Counter matchScoreFailureCounter;
+
+    @PostConstruct
+    public void initMetrics(){
+        applicationCreatedCounter = Counter.builder("job.applications.created")
+                .description("Total job applications created")
+                .register(meterRegistry);
+        matchScoreSuccessCounter = Counter.builder("match.score.success")
+                .description("Successful match score calculations")
+                .register(meterRegistry);
+        matchScoreFailureCounter = Counter.builder("match.score.failure")
+                .description("Failed match score calculations (circuit breaker)")
+                .register(meterRegistry);
+    }
 
     @CacheEvict(value = "applications", allEntries = true)
     @Transactional
@@ -64,6 +84,7 @@ public class JobApplicationServiceImpl implements JobApplicationService {
         jobApp.setJobDescription(request.getJobDescription());
         jobApp.setUserId(userId);
         JobApplication savedApp = jobApplicationRepository.save(jobApp);
+        applicationCreatedCounter.increment();
         if(request.getResumeId()!= null) {
             savedApp.setResumeId(request.getResumeId());
             MatchScoreResponse response = matchServiceClient.getMatchScore(
@@ -74,6 +95,9 @@ public class JobApplicationServiceImpl implements JobApplicationService {
             if (response != null){
                 savedApp.setMatchScore(response.getScore());
                 jobApplicationRepository.save(savedApp);
+                matchScoreSuccessCounter.increment();
+            } else {
+                matchScoreFailureCounter.increment();
             }
             embeddingWorkerService.generateAndSaveEmbedding(savedApp.getId(), request.getJobDescription());
 
