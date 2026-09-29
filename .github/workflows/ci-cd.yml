@@ -114,8 +114,6 @@ jobs:
             -Dsonar.projectKey=codewithnishu221_application-tracker-service \
             -Dsonar.organization=codewithnishu221 \
             -Dsonar.host.url=https://sonarcloud.io
-            -Dsonar.host.url=https://sonarcloud.io
-
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
