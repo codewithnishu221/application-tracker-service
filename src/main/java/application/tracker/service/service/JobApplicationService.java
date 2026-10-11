@@ -19,4 +19,5 @@ public interface JobApplicationService {
 
     ApplicationStatsResponse getApplicationStats(Long userId);
 
+    List<RecentApplicationDto> getRecentApplications(Long userId);
 }
