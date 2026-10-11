@@ -1,6 +1,7 @@
 package application.tracker.service.controller;
 
 import application.tracker.service.dto.*;
+import application.tracker.service.entity.JobApplication;
 import application.tracker.service.exceptions.UnauthorizedAccessException;
 import application.tracker.service.service.JobApplicationService;
 import application.tracker.service.service.JwtService;
@@ -88,6 +89,19 @@ public class JobApplicationController {
             @PathVariable Long userId) {
         return ResponseEntity.ok(jobApplicationService.getApplicationStats(userId));
     }
+
+    @GetMapping("/recent/{userId}")
+    public ResponseEntity<List<RecentApplicationDto>> getRecentApplications(@PathVariable Long userId){
+        return ResponseEntity.ok(jobApplicationService.getRecentApplications(userId));
+    }
+
+
+
+
+
+
+
+
     }
 
 

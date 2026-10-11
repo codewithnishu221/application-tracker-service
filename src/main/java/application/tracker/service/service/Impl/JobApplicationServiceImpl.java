@@ -350,4 +350,21 @@ public class JobApplicationServiceImpl implements JobApplicationService {
                 thisMonth
         );
     }
+
+    @Override
+    public List<RecentApplicationDto> getRecentApplications(Long userId) {
+       List<JobApplication> recentApplications = jobApplicationRepository.findTop5ByUserIdOrderByAppliedAtDesc(userId);
+
+       return recentApplications.stream()
+               .map(app -> new RecentApplicationDto(
+                       app.getId(),
+                       app.getCompanyName(),
+                       app.getJobTitle(),
+                       app.getStatus(),
+                       app.getAppliedAt(),
+                       app.getMatchScore()
+               )).toList();
+    }
+
+
 }
